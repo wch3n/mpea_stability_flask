@@ -2,14 +2,20 @@
 {% block title %} MPEA stability - {{ res[0]['system'] }} {% endblock %}
 {% block content %}
   <div class="col-md-8 mx-0">   
-    <h5>{{ res[0][0]['system'] }}</h5>
+    <h5 class="pb-1">{{ res[0][0]['system'] }}</h5>
+    <h6>Normalized composition: {{ res[0][0]['formula_norm'] }} </h6>
     <h6>Melting point (rule of mixtures): {{ '{0:.0f}'.format(res[0][0]['tm']) }} K</h6>
     <h6>Modeling temperature: {{ '{0:.0f}'.format(res[0][0]['t']) }} K ({{ t_fac }} Tm)</h6>
     <h6>Single-phase solid solution: {{ res[0][0]['stability'] }}</h6>
-    <h6>Solid solution phase: {{ res[0][0]['phase'] }}</h6>
-    <div class="btn-group-toggle">
+    {% if res[0][0]['phase'] == 'HCP' %}
+      <h6>Solid solution phase: {{ res[0][0]['phase'] }}&ast; (close packed)</h6>
+      <h6><small>&ast; our model is less capable of distinguishing between FCC and HCP</small>
+    {% else %}
+      <h6>Solid solution phase: {{ res[0][0]['phase'] }}</h6>
+    {% endif %}
+    <div class="btn-group-toggle pt-2">
       <button type="button" class="btn btn-light" data-toggle="collapse" data-target="#more">
-      Show more
+      &hellip;
       </button>
     </div>
     <div id="more" class="collapse pt-2">
