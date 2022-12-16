@@ -9,6 +9,7 @@ import itertools
 import numpy as np
 import pandas as pd
 import warnings
+from timeit import default_timer
 from multiprocessing import Pool
 from functools import partial
 
@@ -28,7 +29,7 @@ def sane(formula):
     allowed = ['Al', 'Co', 'Cr', 'Cu', 'Fe', 'Hf', 'Mn', 'Mo', 'Nb', 'Ni', 'Ta', 'Ti', 'W', \
                'Zr', 'V', 'Mg', 'Re', 'Os', 'Rh', 'Ir', 'Pd', 'Pt', 'Ag', 'Au', 'Zn', 'Cd', \
                'Hg', 'Si', 'Ge', 'Ga', 'In', 'Sn', 'Sb', 'As', 'Te', 'Pb', 'Bi', 'Y', 'Sc', 'Ru']
-    return all([i.symbol in allowed for i in comp.elements]) and (len(comp.elements) < 8)
+    return all([i.symbol in allowed for i in comp.elements]) and (1 < len(comp.elements) < 9)
 
 def predict(formulas, t_fac, temperature=-1, file_out=None, nproc=1):
     omegas, im, cost = init_params()
@@ -40,6 +41,7 @@ def predict(formulas, t_fac, temperature=-1, file_out=None, nproc=1):
     return res
 
 def model(t_fac, temperature, omegas, im, cost, file_out, formula):
+    time_0 = default_timer()
     comp_raw = Composition(formula)
     comp = comp_raw.fractional_composition
     tm = np.sum([Element(el).melting_point*comp.get_atomic_fraction(el) for el in comp.elements])
@@ -59,7 +61,8 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     entries=[]
     for j in chemsys_list:
         entries.extend(compute_ss_equimolar(omegas,j,t))
-    entries.extend(compute_ss(omegas, comp, t))
+    entries_target, conf_entropy = compute_ss(omegas, comp, t)
+    entries.extend(entries_target)
     pd=PhaseDiagram(entries)
     stability="unstable"
     e_above=1E5
@@ -105,10 +108,11 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     _delta_hcp = hcp_energy-fcc_energy
     _decomp = str([x.name for x in decomp]).replace(' ','')
     hmix = enthalpy_mixing(omegas, comp, struct)
-    out = {'system':_system, 'e_above':e_above, 'e_above_im':e_above_im, 'hmix': hmix, 'stability':stability_im, 'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp, 'tm':tm, 't':t}
+    out = {'system':_system, 'e_above':e_above, 'e_above_im':e_above_im, 'hmix': hmix, 'ts_conf': conf_entropy, 'stability':stability_im, 'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp, 'tm':tm, 't':t}
     msg = "%s %6.3f %6.3f %6.3f %s %s %6.2f %6.3f %6.3f %s %6.0f %6.0f" %(_system, e_above, e_above_im, hmix, stability_im, struct, _cost, _delta_bcc, _delta_hcp, _decomp, tm, t)
     print(msg, file=open(file_out, "a"), flush=True) if not file_out == None else print(msg, flush=True)
-    return out
+    time_1 = default_timer()
+    return out, (time_1-time_0), len(entries)
 
 def compute_ss(omegas, comp, t):
     entries = []
@@ -133,7 +137,7 @@ def compute_ss(omegas, comp, t):
     entries.append(PDEntry(comp, (bcc+element_ref_bcc+conf_entropy),name="SS_BCC"))
     entries.append(PDEntry(comp, (fcc+element_ref_fcc+conf_entropy),name="SS_FCC"))
     entries.append(PDEntry(comp, (hcp+element_ref_hcp+conf_entropy),name="SS_HCP"))
-    return entries
+    return entries, conf_entropy
 
 def compute_ss_equimolar(omegas, chemsys, t):
     e=chemsys.split("-")
