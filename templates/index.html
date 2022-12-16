@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %} MPEA stability {% endblock %}
+{% block content %}
+  <h4> Thermodynamic stability prediction for multi-principal component alloys </h4>
+  <form class="form-row pt-4" method="post">
+    <div class="col-6 col-md-6">
+      <label class="sr-only" for="formula">Formula</label>
+      {% if status == False %}
+      <input class="form-control is-invalid mr-sm-2" type="text" name="formula"
+           placeholder="Co0.2Cr0.2Fe0.2Mn0.2Ni0.2" value="{{ request.form['formula'] }}">
+      <div class="invalid-feedback">
+        invalid formula 
+      </div>
+      {% else %}
+      <input class="form-control mr-sm-2" type="text" name="formula"
+           placeholder="Co0.2Cr0.2Fe0.2Mn0.2Ni0.2" value="{{ request.form['formula'] }}">
+      {% endif %}
+    </div>
+    <div class="col-4 col-md-3">
+      <label class="sr-only" for="t_fac">T_fac</label>
+      <div class="input-group mb-0">
+        <input class="form-control mr-sm-0" type="number" name="t_fac" 
+               value="0.9" step="0.05" min="0" max="1" value="{{ request.form['t_fac'] }}"> 
+        <div class="input-group-append">
+          <span class="input-group-text">Tm</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-success" type="submit">Predict</button>
+    </div>
+  </form>
+{% endblock %}

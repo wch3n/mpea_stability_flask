@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %} MPEA stability - {{ res[0]['system'] }} {% endblock %}
+{% block content %}
+  <div class="col-md-8 mx-0">   
+    <h5>{{ res[0]['system'] }}</h5>
+    <h6>Melting point (rule of mixtures): {{ '{0:.0f}'.format(res[0]['tm']) }} K</h6>
+    <h6>Modeling temperature: {{ '{0:.0f}'.format(res[0]['t']) }} K ({{ t_fac }} Tm)</h6>
+    <h6>Single-phase solid solution: {{ res[0]['stability'] }}</h6>
+    <h6>Solid solution phase: {{ res[0]['phase'] }}</h6>
+    {% if  res[0]['stability'] == 'unstable' %}
+        <h6>Energy above hull: {{ '{0:.1f}'.format(res[0]['e_above_im']*1000) }} meV</h6>
+        <h6>Microstructures: {{ res[0]['decomp'] }}</h6>
+    {% else %}
+        <h6>Inverse energy above hull: {{ '{0:.1f}'.format(res[0]['e_above_im']*1000) }} meV</h6>
+    {% endif %}
+  </div>
+{% endblock %}
