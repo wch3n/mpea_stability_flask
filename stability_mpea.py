@@ -20,6 +20,14 @@ def import_mpea():
     df = pd.read_csv('expt/MPEA_dataset.csv')
     return list(set(df['FORMULA'].values))[:10]
 
+def is_equimolar(comp):
+    c = [i for i in comp.to_reduced_dict.values()]
+    return c.count(c[0]) == len(c)
+
+def is_ss(pd_entry):
+    name = pd_entry.name
+    return name.split('_')[-2] == 'SS'
+    
 def sane(formula):
     try:
         comp = Composition(formula)
@@ -29,7 +37,7 @@ def sane(formula):
     allowed = ['Al', 'Co', 'Cr', 'Cu', 'Fe', 'Hf', 'Mn', 'Mo', 'Nb', 'Ni', 'Ta', 'Ti', 'W', \
                'Zr', 'V', 'Mg', 'Re', 'Os', 'Rh', 'Ir', 'Pd', 'Pt', 'Ag', 'Au', 'Zn', 'Cd', \
                'Hg', 'Si', 'Ge', 'Ga', 'In', 'Sn', 'Sb', 'As', 'Te', 'Pb', 'Bi', 'Y', 'Sc', 'Ru']
-    return all([i.symbol in allowed for i in comp.elements]) and (1 < len(comp.elements) < 9)
+    return all([i.symbol in allowed for i in comp.elements])
 
 def predict(formulas, t_fac, temperature=-1, file_out=None, nproc=1):
     omegas, im, cost = init_params()
@@ -44,14 +52,14 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     time_0 = default_timer()
     comp_raw = Composition(formula)
     comp = comp_raw.fractional_composition
-    norm_dict = comp.get_el_amt_dict()
-    formula_norm = ''
-    for i in sorted(norm_dict.keys()):
-        formula_norm += '{0}{1:.2f} '.format(i, norm_dict[i])
     tm = np.sum([Element(el).melting_point*comp.get_atomic_fraction(el) for el in comp.elements])
     t = temperature if temperature >= 0 else t_fac*tm
     chemsys_list=[]
     ncomp = len(comp)
+    norm_dict = comp.get_el_amt_dict()
+    formula_norm = ''
+    for i in sorted(norm_dict.keys()):
+        formula_norm += '{0}{1:.2f} '.format(i, norm_dict[i])
 
     # check if we have elements beyond the omegas table
     for el in comp.elements:
@@ -65,25 +73,31 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     entries=[]
     for j in chemsys_list:
         entries.extend(compute_ss_equimolar(omegas,j,t))
-    entries_target, conf_entropy = compute_ss(omegas, comp, t)
-    entries.extend(entries_target)
+
+    # for non-equimolar alloy
+    equimolar = is_equimolar(comp)
+    if not equimolar:
+        entries_target, conf_entropy = compute_ss(omegas, comp, t)
+        entries.extend(entries_target)
+    else:
+        conf_entropy = -K*t*log(ncomp)
+    
+    # convex hull analysis
     pd_ss=PhaseDiagram(entries)
     stability="unstable"
-    e_above=1E5
     for e in pd_ss.stable_entries:
-        if len(e.composition.elements) == ncomp:
+        if e.composition.fractional_composition == comp:
             e_above=pd_ss.get_equilibrium_reaction_energy(e)
             stability="stable"
-    bcc_energy=1E5; fcc_energy=1E5; hcp_energy=1E5
     for e in pd_ss.all_entries:
-        if len(e.composition.elements) == ncomp:
+        if e.composition.fractional_composition == comp:
             if e.name == "SS_BCC":
-                bcc_energy=e.energy_per_atom
+                bcc_energy = e.energy_per_atom
             if e.name == "SS_FCC":
-                fcc_energy=e.energy_per_atom
+                fcc_energy = e.energy_per_atom
             if e.name == "SS_HCP":
-                hcp_energy=e.energy_per_atom
-            if (stability=="unstable") & (e_above>pd_ss.get_e_above_hull(e)):
+                hcp_energy = e.energy_per_atom
+            if stability == "unstable":
                 e_above=pd_ss.get_e_above_hull(e)
 
     # now include the IM up to ternary
@@ -94,18 +108,16 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
                 im_name = Composition(r['unit_cell_formula']).reduced_formula+"_"+r["type_im"]
                 entries.append(PDEntry(r['unit_cell_formula'], im_energy, name=im_name))
     pd_im=PhaseDiagram(entries)
-    e_above_im=1E5
     stability_im="unstable"
     for e in pd_im.stable_entries:
-        is_ss = (e.name.split('_')[-2] == 'SS')
-        if (len(e.composition.elements) == ncomp) & is_ss:
+        if e.composition.fractional_composition == comp and is_ss(e):
             e_above_im=pd_im.get_equilibrium_reaction_energy(e)
             stability_im="stable"
     for e in pd_im.all_entries:
-        is_ss = (e.name.split('_')[-2] == 'SS')
-        if (len(e.composition.elements) == ncomp) & (stability_im == "unstable") & is_ss & (e_above_im>pd_im.get_e_above_hull(e)):
+        if (e.composition.fractional_composition == comp) and is_ss(e) and (stability_im == "unstable"): 
             e_above_im=pd_im.get_e_above_hull(e)
 
+    # dump results
     decomp=pd_im.get_decomposition(comp)
     struct = ['BCC','FCC','HCP'][np.argmin([bcc_energy,fcc_energy,hcp_energy])]
     _system = comp_raw.reduced_formula
@@ -114,11 +126,12 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     _delta_hcp = hcp_energy-fcc_energy
     _decomp = str([x.name for x in decomp]).replace(' ','')
     hmix = enthalpy_mixing(omegas, comp, struct)
-    out = {'system':_system, 'formula_norm':formula_norm, 'e_above':e_above, 'e_above_im':e_above_im, 'hmix': hmix, 'ts_conf': conf_entropy, 'stability':stability_im, 'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp, 'tm':tm, 't':t}
-    msg = "%s %6.3f %6.3f %6.3f %s %s %6.2f %6.3f %6.3f %s %6.0f %6.0f" %(_system, e_above, e_above_im, hmix, stability_im, struct, _cost, _delta_bcc, _delta_hcp, _decomp, tm, t)
+    out = {'system':_system, 'formula_norm': formula_norm, 'e_above':e_above, 'e_above_im':e_above_im, 'hmix': hmix, 'ts_conf': conf_entropy, 'stability':stability_im, \
+          'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp, 'tm':tm, 't':t}
+    msg = "%s %6.3f %6.3f %6.3f %s %s %6.2f %6.3f %6.3f %s %6.0f %6.0f" \
+          %(_system, e_above, e_above_im, hmix, stability_im, struct, _cost, _delta_bcc, _delta_hcp, _decomp, tm, t)
     print(msg, file=open(file_out, "a"), flush=True) if not file_out == None else print(msg, flush=True)
-    time_1 = default_timer()
-    return out, (time_1-time_0), len(entries)
+    return out, default_timer() - time_0, len(entries)
 
 def compute_ss(omegas, comp, t):
     entries = []
@@ -165,9 +178,9 @@ def compute_ss_equimolar(omegas, chemsys, t):
             element_ref_bcc+=(1.0/n)*(omegas['elements']['BCC'][i])
             element_ref_hcp+=(1.0/n)*(omegas['elements']['HCP'][i])
         ideal_entropy = -K*t*log(n)
-        entries.append(PDEntry('1'.join(e)+"1",n*(bcc+element_ref_bcc+ideal_entropy),name='1'.join(e)+"1"+"_SS_BCC"))
-        entries.append(PDEntry('1'.join(e)+"1",n*(fcc+element_ref_fcc+ideal_entropy),name='1'.join(e)+"1"+"_SS_FCC"))
-        entries.append(PDEntry('1'.join(e)+"1",n*(hcp+element_ref_hcp+ideal_entropy),name='1'.join(e)+"1"+"_SS_HCP"))
+        entries.append(PDEntry('1'.join(e)+"1",n*(bcc+element_ref_bcc+ideal_entropy),name="SS_BCC"))
+        entries.append(PDEntry('1'.join(e)+"1",n*(fcc+element_ref_fcc+ideal_entropy),name="SS_FCC"))
+        entries.append(PDEntry('1'.join(e)+"1",n*(hcp+element_ref_hcp+ideal_entropy),name="SS_HCP"))
     return entries
 
 def enthalpy_mixing(omegas, comp, struct):
@@ -176,8 +189,8 @@ def enthalpy_mixing(omegas, comp, struct):
         chemsys = '-'.join(sorted([el.symbol for el in i]))
         c = [comp.get_atomic_fraction(el) for el in i]
         cicj = np.prod(c)
-        hmix += omegas['omegas'][struct][chemsys]
-    return hmix*cicj
+        hmix += cicj*omegas['omegas'][struct][chemsys]
+    return hmix
 
 def init_params():
     with open('assets/omegas.json') as f:
@@ -205,5 +218,5 @@ if __name__ == "__main__":
     prefix_out = "mpea"
     file_out = prefix_out+'_{0}Tm_im{1}.csv'.format(t_fac, ORDER_IM)
     #formulas = import_mpea()
-    formulas = 'Co0.125Cr0.125Mo0.1875Ni0.5625'
+    formulas = 'CrCoMn0.01'
     res = predict(formulas, t_fac)
