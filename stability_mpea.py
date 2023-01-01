@@ -16,6 +16,24 @@ from functools import partial
 K=8.61733262E-5
 ORDER_IM = 3
 
+def pretty(struct_str):
+    print(struct_str)
+    structs = struct_str.split("_")
+    if structs[1] == 'SS':
+        comp = Composition(structs[0])
+        c = list(comp.to_reduced_dict.values())
+        if c.count(c[0]) == len(c):
+            formula = ''.join(structs[0].split("1"))
+        else:
+            formula = structs[0]
+        return formula+'_SS'+'('+structs[-1]+')'
+    elif structs[-1] == 'none': 
+        return structs[0]
+    elif len(structs) == 3:
+        return structs[0]+'('+structs[1]+'_'+structs[2]+')'
+    else:
+        return structs[0]+'('+structs[1]+')'
+
 def import_mpea():
     df = pd.read_csv('expt/MPEA_dataset.csv')
     return list(set(df['FORMULA'].values))[:10]
@@ -37,7 +55,7 @@ def sane(formula):
     allowed = ['Al', 'Co', 'Cr', 'Cu', 'Fe', 'Hf', 'Mn', 'Mo', 'Nb', 'Ni', 'Ta', 'Ti', 'W', \
                'Zr', 'V', 'Mg', 'Re', 'Os', 'Rh', 'Ir', 'Pd', 'Pt', 'Ag', 'Au', 'Zn', 'Cd', \
                'Hg', 'Si', 'Ge', 'Ga', 'In', 'Sn', 'Sb', 'As', 'Te', 'Pb', 'Bi', 'Y', 'Sc', 'Ru']
-    return all([i.symbol in allowed for i in comp.elements])
+    return all([i.symbol in allowed for i in comp.elements]) and (1 < len(comp.elements) < 9)
 
 def predict(formulas, t_fac, temperature=-1, file_out=None, nproc=1):
     omegas, im, cost = init_params()
@@ -125,9 +143,11 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     _delta_bcc = bcc_energy-fcc_energy
     _delta_hcp = hcp_energy-fcc_energy
     _decomp = str([x.name for x in decomp]).replace(' ','')
+    _decomp = _decomp.strip("[]").replace("'","").split(",")
+    _decomp_pretty = [pretty(i) for i in _decomp]
     hmix = enthalpy_mixing(omegas, comp, struct)
     out = {'system':_system, 'formula_norm': formula_norm, 'e_above':e_above, 'e_above_im':e_above_im, 'hmix': hmix, 'ts_conf': conf_entropy, 'stability':stability_im, \
-          'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp, 'tm':tm, 't':t}
+          'phase': struct, 'cost':_cost, 'delta_bcc':_delta_bcc, 'delta_hcp':_delta_hcp, 'decomp':_decomp_pretty, 'tm':tm, 't':t}
     msg = "%s %6.3f %6.3f %6.3f %s %s %6.2f %6.3f %6.3f %s %6.0f %6.0f" \
           %(_system, e_above, e_above_im, hmix, stability_im, struct, _cost, _delta_bcc, _delta_hcp, _decomp, tm, t)
     print(msg, file=open(file_out, "a"), flush=True) if not file_out == None else print(msg, flush=True)

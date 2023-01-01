@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %} MPEA stability - {{ res[0]['system'] }} {% endblock %}
+{% block title %} MPEA stability - {{ res[0][0]['system'] }} {% endblock %}
 {% block content %}
   <div class="col-md-8 mx-0">   
     <h5 class="pb-1">{{ res[0][0]['system'] }}</h5>
@@ -21,7 +21,7 @@
     <div id="more" class="collapse pt-2">
       {% if  res[0][0]['stability'] == 'unstable' %}
          <h6>Energy above hull: {{ '{0:.1f}'.format(res[0][0]['e_above_im']*1000) }} meV/atom</h6>
-         <h6>Microstructures: {{ ', '.join(res[0][0]['decomp'].replace("'","").strip("[]").split(",")) }}</h6>
+         <h6>Microstructures: {{ ', '.join(res[0][0]['decomp'])}}</h6>
       {% else %}
          <h6>Inverse energy above hull: {{ '{0:.1f}'.format(res[0][0]['e_above_im']*1000) }} meV/atom</h6>
       {% endif %}

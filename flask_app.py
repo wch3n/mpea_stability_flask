@@ -15,6 +15,8 @@ def index():
             status = sm.sane(formula)
             if status:
                 return redirect(url_for('results', formula=formula, t_fac=t_fac))
+        else:
+            status = 'no_input'
 
     return render_template('index.html', status=status)
 
