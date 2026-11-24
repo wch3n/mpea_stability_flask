@@ -3,7 +3,7 @@
 A Flask app for predicting whether a multi-principal element alloy forms a
 single disordered solid solution at a specified fraction of its estimated
 melting point. Try the [live predictor](https://mpea.alloys.dev/) or explore
-the [illustrated model and Al–Co phase diagram](https://mpea.alloys.dev/about).
+the [model equations and interactive FeCo heating example](https://mpea.alloys.dev/about).
 
 ## Run locally
 

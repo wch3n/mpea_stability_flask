@@ -1,0 +1,46 @@
+{# FeCo model at equal atomic fractions. The axes span 0–1500 K and
+   +60 to −40 meV/atom relative to B2. Share the same scale with the cursor. #}
+{% set enthalpy = 53.01163125 %}
+{% set entropy = 0.05973079809500246 %}
+{% set melting_point = 1789.5 %}
+{% set max_t = 1500 %}
+{% set left, right, zero, scale = 51, 483, 151, 1.85 %}
+{% set crossover = enthalpy / entropy %}
+{% set cross_x = left + (right - left) * crossover / max_t %}
+{% set temp = 300 %}
+{% set dot_x = left + (right - left) * temp / max_t %}
+{% set dot_y = zero - (enthalpy - temp * entropy) * scale %}
+<figure class="phase-chart">
+  <svg id="phase-plot" viewBox="0 0 510 290" role="img" aria-labelledby="plot-title plot-desc"
+       data-enthalpy="{{ enthalpy }}" data-entropy="{{ entropy }}" data-melting="{{ melting_point }}"
+       data-left="{{ left }}" data-right="{{ right }}" data-zero="{{ zero }}" data-scale="{{ scale }}" data-max-t="{{ max_t }}">
+    <title id="plot-title">Free energy of equiatomic FeCo relative to ordered B2</title>
+    <desc id="plot-desc">The energy of the disordered BCC solution falls with temperature. It crosses the B2 reference at 888 kelvin and becomes the stable phase.</desc>
+    <text x="16" y="23" class="axis-title">Free energy relative to B2 (meV/atom)</text>
+    <g class="axis-label" text-anchor="end">
+      {% for tick in [60, 30, 0, -30] %}
+        <path class="gridline" d="M{{ left }} {{ zero - tick * scale }}H{{ right }}"/>
+        <text x="42" y="{{ zero - tick * scale + 5 }}">{{ '%+d'|format(tick) if tick else '0' }}</text>
+      {% endfor %}
+    </g>
+    <path class="reference-line" d="M{{ left }} {{ zero }}H{{ right }}"/>
+    <path class="transition-guide" d="M{{ cross_x }} {{ zero + 6 }}V234"/>
+    <path class="energy-line" d="M{{ left }} {{ zero - enthalpy * scale }}L{{ right }} {{ zero - (enthalpy - max_t * entropy) * scale }}"/>
+    <text class="solution-label" x="153" y="65">Disordered BCC</text>
+    <text class="reference-label" x="399" y="142">Ordered B2</text>
+    <circle class="cross-point" cx="{{ cross_x }}" cy="{{ zero }}" r="4"/>
+    <text x="{{ cross_x - 8 }}" y="216" text-anchor="end" class="cross-label">888 K</text>
+    <g class="axis-label" text-anchor="middle">
+      {% for tick in [0, 500, 1000, 1500] %}
+        {% set x = left + (right - left) * tick / max_t %}
+        <path class="gridline" d="M{{ x }} 232v5"/><text x="{{ x }}" y="254">{{ tick }}</text>
+      {% endfor %}
+      <text class="axis-title" x="264" y="278">Temperature (K)</text>
+    </g>
+    {% if interactive|default(false) %}
+      <line id="separation" x1="{{ dot_x }}" x2="{{ dot_x }}" y1="{{ dot_y }}" y2="{{ zero }}"/>
+      <circle id="cursor" cx="{{ dot_x }}" cy="{{ dot_y }}" r="6"/>
+    {% endif %}
+  </svg>
+  <figcaption>Equiatomic FeCo. The lower line gives the preferred arrangement at each temperature.</figcaption>
+</figure>

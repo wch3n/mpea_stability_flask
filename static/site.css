@@ -56,33 +56,39 @@ figure svg { display: block; width: 100%; height: auto; background: var(--soft);
 figcaption, .byline, .muted, .kicker { color: var(--muted); }
 figcaption { font-size: .84rem; margin-top: .6rem; }
 svg text { fill: var(--ink); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.bonds, .pair-path, .gridlines, .hull-line, .gap-line { fill: none; }
-.bonds { stroke: var(--muted); opacity: .28; }
-.al, .stable-points { fill: var(--blue); }
-.co { fill: var(--gold); stroke: var(--gold-edge); stroke-width: 1.3px; }
-.pair-path { stroke: var(--blue); stroke-width: 3px; stroke-linecap: round; }
-@media (prefers-reduced-motion: no-preference) {
-  .pair-path path { animation: trace-pair 2.4s ease-out both; stroke-dasharray: 52; }
-  .pair-path path:nth-child(2) { animation-delay: .7s; }
-  .pair-path path:nth-child(3) { animation-delay: 1.4s; }
-  @keyframes trace-pair { from { stroke-dashoffset: 52; opacity: .2; } to { stroke-dashoffset: 0; opacity: 1; } }
-}
+.phase-chart svg { padding: .35rem; }
+.phase-chart .axis-label { fill: var(--muted); }
+.phase-chart .axis-title { fill: var(--ink); font-weight: 550; }
+.gridline { stroke: var(--line); }
+.reference-line { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 7 4; }
+.energy-line { fill: none; stroke: var(--blue); stroke-width: 3; }
+.transition-guide { fill: none; stroke: var(--muted); stroke-dasharray: 2 4; opacity: .7; }
+.cross-point { fill: var(--page); stroke: var(--blue); stroke-width: 2; }
+.phase-chart .solution-label { fill: var(--blue); font-weight: 600; }
+.phase-chart .reference-label, .phase-chart .cross-label { fill: var(--muted); }
+#separation { stroke: var(--gold-edge); stroke-width: 2; }
+#cursor { fill: var(--gold); stroke: var(--gold-edge); stroke-width: 1.5; }
+.about-heading { max-width: 52rem; }
 .example { margin-top: 1.8rem; grid-template-columns: 1.4fr 1fr; }
-.hull svg { padding: .45rem; }
-.ticks text { fill: var(--muted); }
-.gridlines { stroke: var(--line); }
-.hull-line { stroke: var(--blue); stroke-width: 2.5px; }
-.gap-line { stroke: var(--ink); stroke-width: 1.5px; stroke-dasharray: 4 3; }
 .readout { border-left: 1px solid var(--line); padding-left: clamp(1.4rem, 4vw, 2.5rem); }
-.metric { font-variant-numeric: tabular-nums; font-size: 2.5rem; line-height: 1.2; letter-spacing: -.035em; font-weight: 650; margin: 0; }
-.metric small { font-size: 1rem; font-weight: 500; letter-spacing: 0; }
-.metric + p, .example-link { color: var(--muted); font-size: .92rem; }
+.winner { font-size: clamp(1.9rem, 3vw, 2.5rem); font-weight: 650; line-height: 1.15; letter-spacing: -.035em; margin: .25rem 0 0; }
+.readout { font-variant-numeric: tabular-nums; }
+.energy-detail, .example-link { color: var(--muted); font-size: .92rem; }
 #controls { margin-top: 1.3rem; }
 #controls label { display: block; }
 input[type=range] { width: 100%; accent-color: var(--blue); margin: .6rem 0 1rem; }
-.method { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-top: 1.8rem; }
-.method p { font-size: .96rem; }
-.method .equation { color: var(--blue); font-size: 1.05rem; }
+@font-face {
+  font-family: "MPEA Math";
+  src: url("fonts/stix-two-math.woff") format("woff");
+  font-display: swap;
+}
+.method { margin-top: 1.6rem; }
+.method-row { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 5vw, 3.5rem); align-items: center; padding-block: 1.65rem; border-top: 1px solid var(--line); }
+.method-row p { font-size: .97rem; }
+.equations { min-width: 0; padding: 1.1rem clamp(.5rem, 2vw, 1.5rem); background: var(--soft); border-radius: 6px; }
+.equations math { font-family: "MPEA Math", "STIX Two Math", math; font-size: clamp(1.06rem, 2.2vw, 1.4rem); margin-block: .6rem; }
+.equations math + math { margin-top: 1.1rem; }
+.equations p { color: var(--muted); font-size: .89rem; }
 .scope { padding-left: 1rem; border-left: 2px solid var(--line); margin-top: 2rem; color: var(--muted); }
 .reference p { margin-bottom: 1rem; }
 form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin-top: 1.5rem; }
@@ -107,11 +113,10 @@ button:hover { opacity: .85; }
 summary { color: var(--blue); cursor: pointer; }
 .links { margin-top: 1.5rem; }
 @media (max-width: 740px) {
-  .split, .example, .method { grid-template-columns: 1fr; }
-  .lattice { max-width: 26rem; }
+  .split, .example, .method-row { grid-template-columns: 1fr; }
   .readout { border: 0; padding: 0; }
   .wrap { width: calc(100% - 2.5rem); }
   .bar { min-height: 62px; }
   form label { width: 100%; }
-  .method { gap: 1.6rem; }
+  .method-row { gap: 1rem; }
 }

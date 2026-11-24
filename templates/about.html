@@ -1,61 +1,70 @@
 {% extends 'base.html' %}
 {% block title %}About the model · MPEA stability{% endblock %}
 {% block content %}
-<section class="hero split">
-  <div><h1>What stabilizes a random alloy?</h1>
-    <p class="lead">Many elements can share a crystal lattice in countless arrangements. That disorder lowers the free energy at high temperature. A competing ordered compound can still lie lower.</p>
-    <p class="byline">Developed by <a href="https://wch3n.github.io/">Wei Chen</a> · UCLouvain</p>
-  </div>
-  {% include '_lattice.html' %}
+<section class="hero about-heading">
+  <h1>When does disorder stabilize an alloy?</h1>
+  <p class="lead">In ordered FeCo, iron and cobalt occupy different sublattices. A random solid solution lets either element occupy either sublattice. The extra arrangements give the solid solution an entropy advantage that can outweigh the energetic preference for ordering.</p>
+  <p class="byline">Developed by <a href="https://wch3n.github.io/">Wei Chen</a> · UCLouvain</p>
 </section>
 
-<section class="section">
-  <h2>Why equiatomic AlCo orders</h2>
-  <p>The lowest-energy disordered AlCo solution is hexagonal close-packed (HCP). At the same composition, the ordered B2 compound has a lower free energy throughout the modeled temperature range.</p>
+<section class="section" id="heating">
+  <h2>Heating equiatomic FeCo</h2>
+  <p>At 0 K the disordered body-centered cubic (BCC) solution costs 53.0 meV/atom more than ordered B2. Its ideal configurational entropy is <i>k</i><sub>B</sub> ln 2 per atom. Each 100 K of heating reduces the free-energy difference by 5.97 meV/atom. The model predicts a crossover near <strong>888 K</strong>.</p>
   <div class="example">
-    <figure class="hull">
-      <svg viewBox="0 0 480 285" role="img" aria-labelledby="hull-title hull-desc">
-        <title id="hull-title">Computed Al–Co convex hull</title>
-        <desc id="hull-desc">Relative to the pure elements, the stable hull connects Al, Al₁₃Co₄, ordered AlCo and Co. The gap from the HCP solid solution to ordered AlCo is the energy above the hull.</desc>
-        <text x="17" y="20">Free energy relative to the elements (eV/atom)</text>
-        <g class="gridlines"><path d="M61 38H432 M61 98H432 M61 158H432 M61 218H432"/></g>
-        <g class="ticks" text-anchor="end"><text x="52" y="43">0</text><text x="52" y="103">−0.2</text><text x="52" y="163">−0.4</text><text x="52" y="223">−0.6</text></g>
-        <path class="hull-line" d="M62 38L149.06 154.30 247 221.70 432 38"/>
-        <g class="stable-points"><circle cx="62" cy="38" r="4"/><circle cx="149.06" cy="154.30" r="4"/><circle cx="247" cy="221.70" r="4"/><circle cx="432" cy="38" r="4"/></g>
-        <text x="97" y="178">Al₁₃Co₄</text><text x="260" y="226">AlCo (B2)</text>
-        <path id="gap-line" class="gap-line" d="M247 138.20V216"/>
-        <g id="solution" transform="translate(247 138.20)"><circle class="co" r="6"/><text x="-12" y="4" text-anchor="end">HCP solution</text></g>
-        <g class="ticks" text-anchor="middle"><text x="62" y="251">0</text><text x="247" y="251">50</text><text x="432" y="251">100</text><text x="247" y="275">Cobalt (at.%)</text></g>
-      </svg>
-      <figcaption>The blue line joins stable phases. At 50 at.% Co, the vertical gap measures the driving force for ordering.</figcaption>
-    </figure>
+    {% with interactive=true %}{% include '_feco_plot.html' %}{% endwith %}
     <div class="readout">
-      <p class="metric"><span id="gap">278.4</span> <small>meV/atom</small></p>
-      <p>above the hull at <span id="temperature">1216</span> K</p>
+      <p class="kicker">Predicted equilibrium phase</p>
+      <p class="winner" id="winner">Ordered B2</p>
+      <p>Lower by <b><span id="advantage">35.1</span> meV/atom</b> at <output id="kelvin" for="temperature">300 K</output>.</p>
+      <p class="energy-detail">The entropy term lowers the disordered solution’s free energy by <span id="entropy-credit">17.9</span> meV/atom from its 0 K value.</p>
       <div id="controls" hidden>
-        <label for="factor">Temperature <output id="fraction" for="factor">0.90</output> T<sub>m</sub></label>
-        <input type="range" id="factor" min="0" max="1" value="0.9" step="0.01">
+        <label for="temperature">Temperature (K)</label>
+        <input type="range" id="temperature" min="0" max="1500" value="300" step="1">
         <button type="button" id="sweep" class="secondary">Animate heating</button>
       </div>
-      <p class="example-link"><a id="example-result" href="{{ url_for('results', formula='AlCo', t_fac='0.9') }}" data-url="{{ url_for('results', formula='AlCo', t_fac='FACTOR') }}">Open prediction at <span id="link-factor">0.90</span> T<sub>m</sub> →</a></p>
+      <p class="example-link"><a id="example-result" href="{{ url_for('results', formula='FeCo', t_fac='0.167644593') }}" data-url="{{ url_for('results', formula='FeCo', t_fac='FACTOR') }}">Open prediction at this temperature →</a></p>
     </div>
   </div>
+  <p class="scope">The two lines compare perfectly ordered B2 and an ideally random solution at fixed composition. The full candidate-phase calculation also selects B2 below the crossing and disordered BCC above it. Partial ordering is outside this model, so the crossing is an estimate of the competition between these limiting states.</p>
 </section>
 
+{% macro xi() -%}<msub><mi>x</mi><mi>i</mi></msub>{%- endmacro %}
+{% macro tm() -%}<msub><mi>T</mi><mi mathvariant="normal">m</mi></msub>{%- endmacro %}
+{% macro suma() -%}<munder><mo>∑</mo><mi>i</mi></munder>{%- endmacro %}
+{% macro conf() -%}<msub><mi>S</mi><mtext>conf</mtext></msub>{%- endmacro %}
+{% macro mix() -%}<mrow><mi mathvariant="normal">Δ</mi><msubsup><mi>H</mi><mtext>mix</mtext><mi>α</mi></msubsup></mrow>{%- endmacro %}
+{% macro g() -%}<msup><mi>G</mi><mi>α</mi></msup>{%- endmacro %}
 <section class="section">
   <h2>How a prediction is made</h2>
   <div class="method">
-    <div><h3>Set the temperature</h3>
-      <p>The formula gives the atomic fraction <i>x</i><sub>i</sub> of each element. The app estimates the alloy melting point by weighting elemental melting points by those fractions, then multiplies by the temperature factor you enter.</p>
-      <p class="equation">T = f ∑<sub>i</sub> x<sub>i</sub> T<sub>m,i</sub></p></div>
-    <div><h3>Compare three lattices</h3>
-      <p>For each body-centered cubic, face-centered cubic and hexagonal close-packed lattice, the model adds elemental reference energies, pairwise mixing enthalpies and the ideal configurational entropy term. Each pair interaction Ω comes from density-functional calculations on a 16-atom binary special quasirandom structure.</p>
-      <p class="equation">G = ∑<sub>i</sub> x<sub>i</sub>E<sub>i</sub> + ∑<sub>i&lt;j</sub> Ω<sub>ij</sub>x<sub>i</sub>x<sub>j</sub> + k<sub>B</sub>T ∑<sub>i</sub> x<sub>i</sub> ln x<sub>i</sub></p></div>
-    <div><h3>Test for decomposition</h3>
-      <p>The convex hull gives the lowest free energy attainable by combining candidate phases at the requested composition. Candidates include the pure elements, equimolar solutions of their subsets, the requested solution, and binary and ternary intermetallics from AFLOW’s ICSD and LIB collections.</p>
-      <p>A solution on the hull is stable within this set. Its inverse hull energy measures its depth relative to competing phases. For an unstable solution, a positive gap gives the energy released per atom on decomposition.</p></div>
+    <div class="method-row">
+      <div><h3>Composition and temperature</h3>
+        <p>The formula gives the atomic fraction of each element. The app estimates the melting point from the elemental melting temperatures, weighted by those fractions. The input factor <i>f</i> sets the calculation temperature.</p></div>
+      <div class="equations">
+        <math display="block" aria-label="Atomic fraction x i equals the atom count n i divided by the total atom count"><mrow>{{ xi() }}<mo>=</mo><mfrac><msub><mi>n</mi><mi>i</mi></msub><mrow><munder><mo>∑</mo><mi>j</mi></munder><msub><mi>n</mi><mi>j</mi></msub></mrow></mfrac></mrow></math>
+        <math display="block" aria-label="Melting temperature is the sum of elemental melting temperatures weighted by atomic fraction. T equals f times the melting temperature."><mrow>{{ tm() }}<mo>=</mo>{{ suma() }}{{ xi() }}<msub><mi>T</mi><mrow><mi mathvariant="normal">m</mi><mo>,</mo><mi>i</mi></mrow></msub><mo>,</mo><mspace width=".6em"/><mi>T</mi><mo>=</mo><mi>f</mi>{{ tm() }}</mrow></math>
+      </div>
+    </div>
+    <div class="method-row">
+      <div><h3>Free energy of a random solution</h3>
+        <p>For each lattice α (BCC, FCC or HCP), the model adds elemental reference energies and pairwise mixing enthalpies. The pair interactions Ω come from density-functional calculations on 16-atom binary special quasirandom structures. All energies here are per atom.</p>
+        <p>At fixed composition the ideal configurational entropy is constant. Multiplication by temperature gives the increasing free-energy benefit of disorder.</p></div>
+      <div class="equations">
+        <math display="block" aria-label="Lattice free energy equals the composition-weighted elemental reference energy plus mixing enthalpy minus temperature times configurational entropy"><mrow>{{ g() }}<mo>=</mo>{{ suma() }}{{ xi() }}<msubsup><mi>E</mi><mi>i</mi><mi>α</mi></msubsup><mo>+</mo>{{ mix() }}<mo>−</mo><mi>T</mi>{{ conf() }}</mrow></math>
+        <math display="block" aria-label="Mixing enthalpy sums lattice-specific interactions times both atomic fractions over distinct element pairs"><mrow>{{ mix() }}<mo>=</mo><munder><mo>∑</mo><mrow><mi>i</mi><mo>&lt;</mo><mi>j</mi></mrow></munder><msubsup><mi>Ω</mi><mrow><mi>i</mi><mi>j</mi></mrow><mi>α</mi></msubsup>{{ xi() }}<msub><mi>x</mi><mi>j</mi></msub></mrow></math>
+        <math display="block" aria-label="Ideal configurational entropy is minus Boltzmann’s constant times the sum of x i times the natural logarithm of x i"><mrow>{{ conf() }}<mo>=</mo><mo>−</mo><msub><mi>k</mi><mi mathvariant="normal">B</mi></msub>{{ suma() }}{{ xi() }}<mo form="prefix" lspace="0.16em" rspace="0.14em">ln</mo>{{ xi() }}</mrow></math>
+      </div>
+    </div>
+    <div class="method-row">
+      <div><h3>Competition with other phases</h3>
+        <p>The lowest-energy random lattice competes with pure elements, equimolar solutions of elemental subsets, and binary and ternary intermetallics from AFLOW’s ICSD and LIB collections. The convex hull gives the lowest free energy of any combination of candidates at the requested composition.</p></div>
+      <div class="equations">
+        <math display="block" aria-label="Energy above the hull equals the lowest random-solution free energy minus the convex hull free energy"><mrow><mi mathvariant="normal">Δ</mi><msub><mi>G</mi><mtext>hull</mtext></msub><mo>=</mo><munder><mo movablelimits="true">min</mo><mi>α</mi></munder>{{ g() }}<mo>−</mo><msub><mi>G</mi><mtext>hull</mtext></msub></mrow></math>
+        <p>A positive gap favors decomposition. For a stable solution the gap is zero, and the app reports its inverse hull energy relative to competing stable phases.</p>
+      </div>
+    </div>
   </div>
-  <p class="scope">The original study screened 658,008 equimolar five-element alloys. This app also accepts unequal fractions and compositions with 2–8 supported elements. The calculation assumes random occupation in solid solutions and treats intermetallic energies as temperature independent. It estimates equilibrium stability. Cooling rate and diffusion can affect which phases form in a sample.</p>
+  <p class="scope">The original study screened 658,008 equimolar five-element alloys. This app also accepts unequal fractions and compositions with 2–8 supported elements. Intermetallic energies are held constant with temperature. Cooling rate and diffusion can affect which phases form in a sample.</p>
 </section>
 <section class="section reference">
   <h2>Reference</h2>
@@ -64,5 +73,5 @@
     <i>Nature Communications</i> <b>14</b>, 2856 (2023).</p>
   <a href="https://wch3n.github.io/">Wei Chen’s research website · wch3n.github.io</a>
 </section>
-<script defer src="{{ url_for('static', filename='alco.js') }}"></script>
+<script defer src="{{ url_for('static', filename='feco.js') }}"></script>
 {% endblock %}
