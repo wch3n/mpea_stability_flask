@@ -1,41 +1,60 @@
-from flask import Flask, render_template, url_for, request, redirect, flash
+from functools import lru_cache
+
+from flask import Flask, abort, jsonify, redirect, render_template, request, url_for
+
 import stability_mpea as sm
-from markupsafe import escape
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
-@app.route('/', methods=["POST", "GET"])
+
+def prediction_inputs(formula, t_fac):
+    formula = formula.strip()
+    if not sm.sane(formula):
+        raise ValueError("Enter a supported alloy formula with 2 to 8 elements.")
+    try:
+        factor = float(t_fac)
+    except (TypeError, ValueError):
+        factor = None
+    if factor is None or not 0 <= factor <= 1:
+        raise ValueError("Enter a temperature factor between 0 and 1.")
+    return formula, factor
+
+
+@lru_cache(maxsize=128)
+def prediction(formula, factor):
+    return sm.predict(formula, factor)
+
+
+@app.route("/", methods=["POST", "GET"])
 def index():
-    status = True
     if request.method == "POST":
-        formula = escape(request.form['formula']).lstrip()
-        t_fac = escape(request.form['t_fac'])
+        try:
+            formula, factor = prediction_inputs(request.form.get("formula", ""), request.form.get("t_fac"))
+        except ValueError as exc:
+            return render_template("index.html", error=str(exc)), 400
+        return redirect(url_for("results", formula=formula, t_fac=factor))
+    return render_template("index.html")
 
-        if formula:
-            status = sm.sane(formula)
-            if status:
-                return redirect(url_for('results', formula=formula, t_fac=t_fac))
-        else:
-            status = 'no_input'
 
-    return render_template('index.html', status=status)
-
-@app.route('/<formula>:<t_fac>')
+@app.route("/<formula>:<t_fac>")
 def results(formula, t_fac):
-    t_fac = float(t_fac)
-    res = sm.predict(formula, t_fac)
-    return render_template('results.html', res=res, t_fac=t_fac)
+    try:
+        formula, factor = prediction_inputs(formula, t_fac)
+    except ValueError as exc:
+        abort(400, description=str(exc))
+    return render_template("results.html", res=prediction(formula, factor), t_fac=factor)
 
-@app.route('/about')
+
+@app.route("/about")
 def about():
-    return render_template('about.html')
+    return render_template("about.html")
 
-@app.route('/api/<formula>:<t_fac>')
-def stability(formula,t_fac):
-    import json
-    status = sm.sane(escape(formula))
-    if status:
-        res = sm.predict(escape(formula), float(escape(t_fac)))
-        return json.dumps(res[0][0])
-    else:
-        return "invalid formula"
+
+@app.route("/api/<formula>:<t_fac>")
+def stability(formula, t_fac):
+    try:
+        formula, factor = prediction_inputs(formula, t_fac)
+    except ValueError as exc:
+        return jsonify(error=str(exc)), 400
+    return jsonify(prediction(formula, factor)[0][0])

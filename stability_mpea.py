@@ -3,7 +3,8 @@
 from pymatgen.core import Element, Composition
 from pymatgen.analysis.phase_diagram import PhaseDiagram, PDEntry
 from pymatgen.analysis.cost import CostAnalyzer, CostDBCSV
-from math import log
+from math import isfinite, log
+from pathlib import Path
 import json
 import itertools
 import numpy as np
@@ -11,18 +12,17 @@ import pandas as pd
 import warnings
 from timeit import default_timer
 from multiprocessing import Pool
-from functools import partial
+from functools import lru_cache, partial
 
 K=8.61733262E-5
 ORDER_IM = 3
+ASSETS = Path(__file__).resolve().parent / "assets"
 
 def pretty(struct_str):
-    print(struct_str)
     structs = struct_str.split("_")
     if structs[1] == 'SS':
         comp = Composition(structs[0])
-        c = list(comp.to_reduced_dict.values())
-        if c.count(c[0]) == len(c):
+        if is_equimolar(comp):
             formula = ''.join(structs[0].split("1"))
         else:
             formula = structs[0]
@@ -39,32 +39,43 @@ def import_mpea():
     return list(set(df['FORMULA'].values))[:10]
 
 def is_equimolar(comp):
-    c = [i for i in comp.to_reduced_dict.values()]
+    c = list(comp.values())
     return c.count(c[0]) == len(c)
 
-def is_ss(pd_entry):
-    name = pd_entry.name
-    return name.split('_')[-2] == 'SS'
-    
 def sane(formula):
+    if not formula or len(formula) > 256:
+        return False
     try:
-        comp = Composition(formula)
-    except:
+        comp = Composition(formula, strict=True)
+        if not isfinite(comp.num_atoms) or not 2 <= len(comp) <= 8:
+            return False
+        if len(comp.fractional_composition) != len(comp):
+            return False
+    except (ValueError, TypeError, OverflowError, RecursionError, ZeroDivisionError):
         return False
 
     allowed = ['Al', 'Co', 'Cr', 'Cu', 'Fe', 'Hf', 'Mn', 'Mo', 'Nb', 'Ni', 'Ta', 'Ti', 'W', \
                'Zr', 'V', 'Mg', 'Re', 'Os', 'Rh', 'Ir', 'Pd', 'Pt', 'Ag', 'Au', 'Zn', 'Cd', \
                'Hg', 'Si', 'Ge', 'Ga', 'In', 'Sn', 'Sb', 'As', 'Te', 'Pb', 'Bi', 'Y', 'Sc', 'Ru']
-    return all([i.symbol in allowed for i in comp.elements]) and (1 < len(comp.elements) < 9)
+    return all(i.symbol in allowed for i in comp.elements)
 
 def predict(formulas, t_fac, temperature=-1, file_out=None, nproc=1):
     omegas, im, cost = init_params()
     if not type(formulas) is list:
         formulas = [formulas]
     func = partial(model,t_fac,temperature,omegas,im,cost,file_out)
+    if nproc == 1:
+        return [func(formula) for formula in formulas]
     with Pool(nproc) as pool:
         res = pool.map(func, formulas)
     return res
+
+def hull_energy(diagram, candidates):
+    for entry in candidates:
+        if entry in diagram.stable_entries:
+            return diagram.get_equilibrium_reaction_energy(entry), "stable"
+    lowest = min(candidates, key=lambda entry: entry.energy_per_atom)
+    return diagram.get_e_above_hull(lowest), "unstable"
 
 def model(t_fac, temperature, omegas, im, cost, file_out, formula):
     time_0 = default_timer()
@@ -89,34 +100,23 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
             chemsys = "-".join(sorted([x.symbol for x in combi]))
             chemsys_list.append(chemsys)
     entries=[]
-    for j in chemsys_list:
-        entries.extend(compute_ss_equimolar(omegas,j,t))
-
-    # for non-equimolar alloy
-    equimolar = is_equimolar(comp)
-    if not equimolar:
-        entries_target, conf_entropy = compute_ss(omegas, comp, t)
-        entries.extend(entries_target)
-    else:
+    # The full system is the final combination. Keep its three competing
+    # crystal structures so each hull is queried at the target composition.
+    for j in chemsys_list[:-1]:
+        entries.extend(compute_ss_equimolar(omegas, j, t))
+    candidates = compute_ss_equimolar(omegas, chemsys_list[-1], t)
+    entries.extend(candidates)
+    if is_equimolar(comp):
         conf_entropy = -K*t*log(ncomp)
-    
-    # convex hull analysis
-    pd_ss=PhaseDiagram(entries)
-    stability="unstable"
-    for e in pd_ss.stable_entries:
-        if e.composition.fractional_composition == comp:
-            e_above=pd_ss.get_equilibrium_reaction_energy(e)
-            stability="stable"
-    for e in pd_ss.all_entries:
-        if e.composition.fractional_composition == comp:
-            if e.name == "SS_BCC":
-                bcc_energy = e.energy_per_atom
-            if e.name == "SS_FCC":
-                fcc_energy = e.energy_per_atom
-            if e.name == "SS_HCP":
-                hcp_energy = e.energy_per_atom
-            if stability == "unstable":
-                e_above=pd_ss.get_e_above_hull(e)
+    else:
+        candidates, conf_entropy = compute_ss(omegas, comp, t)
+        entries.extend(candidates)
+
+    energies = {e.name: e.energy_per_atom for e in candidates}
+    bcc_energy = energies["SS_BCC"]
+    fcc_energy = energies["SS_FCC"]
+    hcp_energy = energies["SS_HCP"]
+    e_above, _ = hull_energy(PhaseDiagram(entries), candidates)
 
     # now include the IM up to ternary
     for j in chemsys_list:
@@ -126,14 +126,7 @@ def model(t_fac, temperature, omegas, im, cost, file_out, formula):
                 im_name = Composition(r['unit_cell_formula']).reduced_formula+"_"+r["type_im"]
                 entries.append(PDEntry(r['unit_cell_formula'], im_energy, name=im_name))
     pd_im=PhaseDiagram(entries)
-    stability_im="unstable"
-    for e in pd_im.stable_entries:
-        if e.composition.fractional_composition == comp and is_ss(e):
-            e_above_im=pd_im.get_equilibrium_reaction_energy(e)
-            stability_im="stable"
-    for e in pd_im.all_entries:
-        if (e.composition.fractional_composition == comp) and is_ss(e) and (stability_im == "unstable"): 
-            e_above_im=pd_im.get_e_above_hull(e)
+    e_above_im, stability_im = hull_energy(pd_im, candidates)
 
     # dump results
     decomp=pd_im.get_decomposition(comp)
@@ -212,12 +205,13 @@ def enthalpy_mixing(omegas, comp, struct):
         hmix += cicj*omegas['omegas'][struct][chemsys]
     return hmix
 
+@lru_cache(maxsize=1)
 def init_params():
-    with open('assets/omegas.json') as f:
+    with open(ASSETS / 'omegas.json') as f:
         omegas = json.load(f)
-    with open('assets/im_aflow_icsd.json') as f:
+    with open(ASSETS / 'im_aflow_icsd.json') as f:
         im_icsd=json.load(f)
-    with open('assets/im_aflow_lib.json') as f:
+    with open(ASSETS / 'im_aflow_lib.json') as f:
         im_lib = json.load(f)
     im = {}
     keys = im_icsd.keys() | im_lib.keys()

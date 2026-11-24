@@ -9,7 +9,7 @@
     <h6>Single-phase solid solution: {{ res[0][0]['stability'] }}</h6>
     {% if res[0][0]['phase'] == 'HCP' %}
       <h6>Solid solution phase: {{ res[0][0]['phase'] }}&ast; (close packed)</h6>
-      <h6><small>&ast; our model is less capable of distinguishing between FCC and HCP</small>
+      <h6><small>&ast; our model is less capable of distinguishing between FCC and HCP</small></h6>
     {% else %}
       <h6>Solid solution phase: {{ res[0][0]['phase'] }}</h6>
     {% endif %}
@@ -26,8 +26,8 @@
          <h6>Inverse energy above hull: {{ '{0:.1f}'.format(res[0][0]['e_above_im']*1000) }} meV/atom</h6>
       {% endif %}
       <h6>Mixing enthalpy: {{ '{0:.1f}'.format(res[0][0]['hmix']*1000) }} meV/atom</h6>
-      <h6>Configurational entropy: {{ '{0:.1f}'.format(res[0][0]['ts_conf']*1000) }} meV/atom</h6>
-      <span class="pt-4"><small>Query over {{ res[0][2] }} entries in {{ '{0:.1f}'.format(res[0][1]) }} s.</small></span>
+      <h6>Configurational free-energy contribution (&minus;T S): {{ '{0:.1f}'.format(res[0][0]['ts_conf']*1000) }} meV/atom</h6>
+      <span class="pt-4"><small>Model calculation over {{ res[0][2] }} entries took {{ '{0:.1f}'.format(res[0][1]) }} s.</small></span>
     </div>
   </div>
 {% endblock %}
