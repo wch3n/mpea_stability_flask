@@ -1,28 +1,20 @@
 {% extends 'base.html' %}
-{% block title %} MPEA stability {% endblock %}
 {% block content %}
-<div>
-  <h4>Thermodynamic stability prediction for multi-principal element alloys</h4>
-  <form class="form-row pt-4" method="post">
-    <div class="col-6 pt-2">
-      <label class="sr-only" for="formula">Formula</label>
-      <input class="form-control mr-sm-2" id="formula" type="text" name="formula"
-             placeholder="Al0.1CoCrFeMnNi" required maxlength="256" autofocus value="{{ request.form.get('formula', '') }}">
-    </div>
-    <div class="col-auto pt-2">
-      <label class="sr-only" for="t_fac">T_fac</label>
-      <div class="input-group mb-0">
-        <input class="form-control mr-0" type="number" id="t_fac" name="t_fac" required
-               step="0.05" min="0" max="1" value="{{ request.form.get('t_fac', '0.9') }}">
-        <div class="input-group-append">
-          <span class="input-group-text">Tm</span>
-        </div>
-      </div>
-    </div>
-    <div class="col-auto pt-2">
-      <button class="btn btn-outline-success" type="submit">Predict</button>
-    </div>
+<section class="hero split">
+  <div><h1>Will an alloy form a single phase?</h1>
+    <p class="lead">Predict the thermodynamic stability of a multi-principal element alloy from its composition and temperature.</p>
+    <a href="{{ url_for('about') }}">How the prediction works →</a>
+  </div>
+  {% include '_lattice.html' %}
+</section>
+<section class="section">
+  <h2>Predict alloy stability</h2>
+  <p>Enter a chemical formula with 2 to 8 supported elements. The temperature factor is a fraction of the estimated melting point.</p>
+  <form method="post">
+    <label>Alloy formula<input type="text" name="formula" placeholder="Al0.1CoCrFeMnNi" required maxlength="256" value="{{ request.form.get('formula', '') }}"></label>
+    <label>Temperature factor (T/T<sub>m</sub>)<input type="number" name="t_fac" required step="0.05" min="0" max="1" value="{{ request.form.get('t_fac', '0.9') }}"></label>
+    <button type="submit">Predict</button>
   </form>
-  {% if error %}<p class="text-danger" role="alert">{{ error }}</p>{% endif %}
-</div>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+</section>
 {% endblock %}

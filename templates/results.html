@@ -1,33 +1,33 @@
 {% extends 'base.html' %}
-{% block title %} MPEA stability - {{ res[0][0]['system'] }} {% endblock %}
+{% set alloy = res[0][0] %}
+{% block title %}{{ alloy.system }} · MPEA stability{% endblock %}
 {% block content %}
-  <div class="col-md-8 mx-0">   
-    <h5 class="pb-1">{{ res[0][0]['system'] }}</h5>
-    <h6>Normalized composition: {{ res[0][0]['formula_norm'] }} </h6>
-    <h6>Melting point (rule of mixtures): {{ '{0:.0f}'.format(res[0][0]['tm']) }} K</h6>
-    <h6>Modeling temperature: {{ '{0:.0f}'.format(res[0][0]['t']) }} K ({{ t_fac }} Tm)</h6>
-    <h6>Single-phase solid solution: {{ res[0][0]['stability'] }}</h6>
-    {% if res[0][0]['phase'] == 'HCP' %}
-      <h6>Solid solution phase: {{ res[0][0]['phase'] }}&ast; (close packed)</h6>
-      <h6><small>&ast; our model is less capable of distinguishing between FCC and HCP</small></h6>
-    {% else %}
-      <h6>Solid solution phase: {{ res[0][0]['phase'] }}</h6>
-    {% endif %}
-    <div class="btn-group-toggle pt-2">
-      <button type="button" class="btn btn-light" data-toggle="collapse" data-target="#more">
-      &hellip;
-      </button>
-    </div>
-    <div id="more" class="collapse pt-2">
-      {% if  res[0][0]['stability'] == 'unstable' %}
-         <h6>Energy above hull: {{ '{0:.1f}'.format(res[0][0]['e_above_im']*1000) }} meV/atom</h6>
-         <h6>Microstructures: {{ ', '.join(res[0][0]['decomp'])}}</h6>
+<section class="hero results">
+  <p class="kicker">Predicted solid solution</p>
+  <h1>{{ alloy.system }}</h1>
+  <p class="lead">The lowest-energy solid solution is <strong>{{ alloy.phase }}</strong>. It is <strong>{{ alloy.stability }}</strong> at {{ '%.0f'|format(alloy.t) }} K.</p>
+  {% if alloy.phase == 'HCP' %}<p class="muted">HCP and FCC are both close-packed. The model has limited accuracy in distinguishing these structures.</p>{% endif %}
+</section>
+<section class="section results">
+  <h2>Calculation</h2>
+  <dl class="values">
+    <dt>Normalized composition</dt><dd>{{ alloy.formula_norm }}</dd>
+    <dt>Estimated melting point</dt><dd>{{ '%.0f'|format(alloy.tm) }} K</dd>
+    <dt>Modeling temperature</dt><dd>{{ '%.0f'|format(alloy.t) }} K ({{ t_fac }} T<sub>m</sub>)</dd>
+  </dl>
+  <details><summary>Prediction details</summary>
+    <dl class="values">
+      {% if alloy.stability == 'unstable' %}
+        <dt>Energy above hull</dt><dd>{{ '%.1f'|format(alloy.e_above_im*1000) }} meV/atom</dd>
+        <dt>Predicted decomposition</dt><dd>{{ alloy.decomp|join(', ') }}</dd>
       {% else %}
-         <h6>Inverse energy above hull: {{ '{0:.1f}'.format(res[0][0]['e_above_im']*1000) }} meV/atom</h6>
+        <dt>Inverse hull energy</dt><dd>{{ '%.1f'|format(alloy.e_above_im*1000) }} meV/atom</dd>
       {% endif %}
-      <h6>Mixing enthalpy: {{ '{0:.1f}'.format(res[0][0]['hmix']*1000) }} meV/atom</h6>
-      <h6>Configurational free-energy contribution (&minus;T S): {{ '{0:.1f}'.format(res[0][0]['ts_conf']*1000) }} meV/atom</h6>
-      <span class="pt-4"><small>Model calculation over {{ res[0][2] }} entries took {{ '{0:.1f}'.format(res[0][1]) }} s.</small></span>
-    </div>
-  </div>
+      <dt>Mixing enthalpy</dt><dd>{{ '%.1f'|format(alloy.hmix*1000) }} meV/atom</dd>
+      <dt>Configurational contribution (−TS)</dt><dd>{{ '%.1f'|format(alloy.ts_conf*1000) }} meV/atom</dd>
+    </dl>
+    <p class="muted">Evaluated {{ res[0][2] }} entries in {{ '%.1f'|format(res[0][1]) }} s.</p>
+  </details>
+  <p class="links"><a href="{{ url_for('index') }}">Predict another alloy</a><a href="{{ url_for('about') }}">About the model</a></p>
+</section>
 {% endblock %}

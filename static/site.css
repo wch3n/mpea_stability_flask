@@ -1,0 +1,117 @@
+:root {
+  color-scheme: light;
+  --page: #fff;
+  --ink: #1c2126;
+  --muted: #5a6470;
+  --line: #e2e6ea;
+  --soft: #f5f7f9;
+  --blue: #1d4f91;
+  --gold: #e3ab3c;
+  --gold-edge: #966519;
+  --error: #9d3929;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #14171b; --ink: #e6e9ed; --muted: #a4afbb;
+    --line: #333b44; --soft: #1a1e23; --blue: #8db8f2;
+    --gold: #f0c04a; --gold-edge: #c9962c; --error: #ef927c;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+  background: var(--page); color: var(--ink);
+  font: 1rem/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { width: min(1040px, calc(100% - 3rem)); margin-inline: auto; }
+main { flex: 1; }
+h1, h2, h3 { line-height: 1.12; font-weight: 650; letter-spacing: -.035em; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.5rem, 5.5vw, 4.1rem); }
+h2 { font-size: clamp(1.65rem, 3vw, 2.1rem); }
+h3 { font-size: 1.25rem; }
+p { margin: .85rem 0 0; }
+a { color: var(--blue); text-underline-offset: .2em; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 4px; }
+.skip { position: absolute; z-index: 1; left: .5rem; top: -5rem; background: var(--page); padding: .5rem; }
+.skip:focus { top: .5rem; }
+.site-header, footer { border-color: var(--line); border-style: solid; border-width: 0 0 1px; }
+.bar, nav, .links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.bar { min-height: 72px; justify-content: space-between; }
+.brand { color: var(--ink); text-decoration: none; font-size: 1.25rem; font-weight: 700; letter-spacing: -.04em; }
+nav a { color: var(--muted); font-size: .93rem; text-decoration: none; padding-block: .5rem; }
+nav a[aria-current], nav a:hover { color: var(--blue); text-decoration: underline; }
+footer { border-width: 1px 0 0; color: var(--muted); font-size: .9rem; }
+.hero { padding-block: clamp(2.6rem, 6vw, 4.5rem); }
+.split, .example { display: grid; grid-template-columns: 1.35fr 1fr; align-items: center; gap: clamp(1.8rem, 5vw, 4rem); }
+.lead { color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.19rem); max-width: 48rem; }
+.hero a, .byline { font-size: .94rem; }
+.hero .lead + a { display: inline-block; margin-top: 1.25rem; }
+.section { border-top: 1px solid var(--line); padding-block: clamp(2rem, 5vw, 3.75rem); }
+.section > p { max-width: 46rem; }
+figure { margin: 0; }
+figure svg { display: block; width: 100%; height: auto; background: var(--soft); border: 1px solid var(--line); border-radius: 9px; }
+figcaption, .byline, .muted, .kicker { color: var(--muted); }
+figcaption { font-size: .84rem; margin-top: .6rem; }
+svg text { fill: var(--ink); font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.bonds, .pair-path, .gridlines, .hull-line, .gap-line { fill: none; }
+.bonds { stroke: var(--muted); opacity: .28; }
+.al, .stable-points { fill: var(--blue); }
+.co { fill: var(--gold); stroke: var(--gold-edge); stroke-width: 1.3px; }
+.pair-path { stroke: var(--blue); stroke-width: 3px; stroke-linecap: round; }
+@media (prefers-reduced-motion: no-preference) {
+  .pair-path path { animation: trace-pair 2.4s ease-out both; stroke-dasharray: 52; }
+  .pair-path path:nth-child(2) { animation-delay: .7s; }
+  .pair-path path:nth-child(3) { animation-delay: 1.4s; }
+  @keyframes trace-pair { from { stroke-dashoffset: 52; opacity: .2; } to { stroke-dashoffset: 0; opacity: 1; } }
+}
+.example { margin-top: 1.8rem; grid-template-columns: 1.4fr 1fr; }
+.hull svg { padding: .45rem; }
+.ticks text { fill: var(--muted); }
+.gridlines { stroke: var(--line); }
+.hull-line { stroke: var(--blue); stroke-width: 2.5px; }
+.gap-line { stroke: var(--ink); stroke-width: 1.5px; stroke-dasharray: 4 3; }
+.readout { border-left: 1px solid var(--line); padding-left: clamp(1.4rem, 4vw, 2.5rem); }
+.metric { font-variant-numeric: tabular-nums; font-size: 2.5rem; line-height: 1.2; letter-spacing: -.035em; font-weight: 650; margin: 0; }
+.metric small { font-size: 1rem; font-weight: 500; letter-spacing: 0; }
+.metric + p, .example-link { color: var(--muted); font-size: .92rem; }
+#controls { margin-top: 1.3rem; }
+#controls label { display: block; }
+input[type=range] { width: 100%; accent-color: var(--blue); margin: .6rem 0 1rem; }
+.method { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-top: 1.8rem; }
+.method p { font-size: .96rem; }
+.method .equation { color: var(--blue); font-size: 1.05rem; }
+.scope { padding-left: 1rem; border-left: 2px solid var(--line); margin-top: 2rem; color: var(--muted); }
+.reference p { margin-bottom: 1rem; }
+form { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; margin-top: 1.5rem; }
+label { color: var(--ink); font-size: .95rem; font-weight: 550; }
+form label:first-child { width: min(100%, 24rem); }
+form input {
+  display: block; width: 100%; padding: .7rem .85rem; min-height: 46px; margin-top: .35rem;
+  color: var(--ink); background: var(--page); border: 1px solid var(--muted); border-radius: 5px; font: inherit; font-weight: 400;
+}
+input::placeholder { color: var(--muted); }
+button { font: inherit; font-size: .95rem; font-weight: 550; color: var(--page); background: var(--ink); border: 1px solid var(--ink); border-radius: 5px; padding: .65rem 1.25rem; cursor: pointer; min-height: 46px; }
+button:hover { opacity: .85; }
+.secondary { background: var(--page); color: var(--ink); min-height: 38px; padding: .3rem .85rem; }
+.error { color: var(--error); }
+.results { max-width: 52rem; }
+.results h1, .values dd { overflow-wrap: anywhere; }
+.kicker { margin: 0 0 .6rem; }
+.values { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); margin: 1.25rem 0; }
+.values > * { padding: .65rem 0; border-bottom: 1px solid var(--line); }
+.values dt { color: var(--muted); }
+.values dd { margin: 0; padding-left: 1rem; font-weight: 550; }
+summary { color: var(--blue); cursor: pointer; }
+.links { margin-top: 1.5rem; }
+@media (max-width: 740px) {
+  .split, .example, .method { grid-template-columns: 1fr; }
+  .lattice { max-width: 26rem; }
+  .readout { border: 0; padding: 0; }
+  .wrap { width: calc(100% - 2.5rem); }
+  .bar { min-height: 62px; }
+  form label { width: 100%; }
+  .method { gap: 1.6rem; }
+}
