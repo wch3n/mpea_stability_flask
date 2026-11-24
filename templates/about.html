@@ -11,21 +11,26 @@
   <h2>Heating equiatomic FeCo</h2>
   <p>At 0 K the disordered body-centered cubic (BCC) solution costs 53.0 meV/atom more than ordered B2. Its ideal configurational entropy is <i>k</i><sub>B</sub> ln 2 per atom. Each 100 K of heating reduces the free-energy difference by 5.97 meV/atom. The model predicts a crossover near <strong>888 K</strong>.</p>
   <div class="example">
-    {% with interactive=true %}{% include '_feco_plot.html' %}{% endwith %}
+    {% include '_feco_hull.html' %}
+    {% include '_feco_plot.html' %}
     <div class="readout">
-      <p class="kicker">Predicted equilibrium phase</p>
-      <p class="winner" id="winner">Ordered B2</p>
-      <p>Lower by <b><span id="advantage">35.1</span> meV/atom</b> at <output id="kelvin" for="temperature">300 K</output>.</p>
-      <p class="energy-detail">The entropy term lowers the disordered solution’s free energy by <span id="entropy-credit">17.9</span> meV/atom from its 0 K value.</p>
-      <div id="controls" hidden>
-        <label for="temperature">Temperature (K)</label>
-        <input type="range" id="temperature" min="0" max="1500" value="300" step="1">
-        <button type="button" id="sweep" class="secondary">Animate heating</button>
+      <div class="phase-summary">
+        <p class="kicker">Predicted equilibrium phase</p>
+        <p class="winner" id="winner">Ordered B2</p>
+        <p>Lower by <b><span id="advantage">35.1</span> meV/atom</b> at <output id="kelvin" for="temperature">300 K</output>.</p>
+        <p class="energy-detail">The entropy term lowers the disordered solution’s free energy by <span id="entropy-credit">17.9</span> meV/atom from its 0 K value.</p>
       </div>
-      <p class="example-link"><a id="example-result" href="{{ url_for('results', formula='FeCo', t_fac='0.167644593') }}" data-url="{{ url_for('results', formula='FeCo', t_fac='FACTOR') }}">Open prediction at this temperature →</a></p>
+      <div class="heating-settings">
+        <div id="controls" hidden>
+          <label for="temperature">Temperature (K)</label>
+          <input type="range" id="temperature" min="0" max="1500" value="300" step="1">
+          <button type="button" id="sweep" class="secondary">Animate heating</button>
+        </div>
+        <p class="example-link"><a id="example-result" href="{{ url_for('results', formula='FeCo', t_fac='0.167644593') }}" data-url="{{ url_for('results', formula='FeCo', t_fac='FACTOR') }}">Open prediction at this temperature →</a></p>
+      </div>
     </div>
   </div>
-  <p class="scope">The two lines compare perfectly ordered B2 and an ideally random solution at fixed composition. The full candidate-phase calculation also selects B2 below the crossing and disordered BCC above it. Partial ordering is outside this model, so the crossing is an estimate of the competition between these limiting states.</p>
+  <p class="scope">The temperature scan compares perfectly ordered B2 and an ideally random solution at fixed composition. The full candidate-phase calculation also selects B2 below the crossing and disordered BCC above it. Partial ordering is outside this model, so the crossing is an estimate of the competition between these limiting states.</p>
 </section>
 
 {% macro xi() -%}<msub><mi>x</mi><mi>i</mi></msub>{%- endmacro %}
@@ -71,7 +76,6 @@
   <p><a href="https://doi.org/10.1038/s41467-023-38423-7">A map of single-phase high-entropy alloys</a><br>
     W. Chen, A. Hilhorst, G. Bokas, S. Gorsse, P. J. Jacques and G. Hautier.
     <i>Nature Communications</i> <b>14</b>, 2856 (2023).</p>
-  <a href="https://wch3n.github.io/">Wei Chen’s research website · wch3n.github.io</a>
 </section>
 <script defer src="{{ url_for('static', filename='feco.js') }}"></script>
 {% endblock %}

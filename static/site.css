@@ -38,14 +38,16 @@ a:hover { text-decoration-thickness: 2px; }
 .skip { position: absolute; z-index: 1; left: .5rem; top: -5rem; background: var(--page); padding: .5rem; }
 .skip:focus { top: .5rem; }
 .site-header, footer { border-color: var(--line); border-style: solid; border-width: 0 0 1px; }
-.bar, nav, .links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.bar, nav, .links, .footer-links { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
 .bar { min-height: 72px; justify-content: space-between; }
 .brand { color: var(--ink); text-decoration: none; font-size: 1.25rem; font-weight: 700; letter-spacing: -.04em; }
 nav a { color: var(--muted); font-size: .93rem; text-decoration: none; padding-block: .5rem; }
 nav a[aria-current], nav a:hover { color: var(--blue); text-decoration: underline; }
 footer { border-width: 1px 0 0; color: var(--muted); font-size: .9rem; }
 .hero { padding-block: clamp(2.6rem, 6vw, 4.5rem); }
-.split, .example { display: grid; grid-template-columns: 1.35fr 1fr; align-items: center; gap: clamp(1.8rem, 5vw, 4rem); }
+.predictor { max-width: 52rem; }
+.predictor h1 { font-size: clamp(2.1rem, 4.8vw, 3.25rem); }
+.predictor form { margin-block: 2rem; }
 .lead { color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.19rem); max-width: 48rem; }
 .hero a, .byline { font-size: .94rem; }
 .hero .lead + a { display: inline-block; margin-top: 1.25rem; }
@@ -69,12 +71,23 @@ svg text { fill: var(--ink); font: 14px -apple-system, BlinkMacSystemFont, "Sego
 #separation { stroke: var(--gold-edge); stroke-width: 2; }
 #cursor { fill: var(--gold); stroke: var(--gold-edge); stroke-width: 1.5; }
 .about-heading { max-width: 52rem; }
-.example { margin-top: 1.8rem; grid-template-columns: 1.4fr 1fr; }
-.readout { border-left: 1px solid var(--line); padding-left: clamp(1.4rem, 4vw, 2.5rem); }
+.example { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "hull scan" "readout readout"; gap: 1.5rem 2rem; margin-top: 2rem; }
+.hull { grid-area: hull; }
+.scan { grid-area: scan; }
+.phase-chart h3 { margin-bottom: .85rem; }
+#fixed-phases { fill: var(--muted); }
+#b2-phase { fill: var(--page); stroke: var(--ink); stroke-width: 1.7; }
+#bcc-phase { fill: var(--gold); stroke: var(--gold-edge); stroke-width: 1.5; }
+#hull-distance { stroke: var(--gold-edge); stroke-dasharray: 3 3; }
+.phase-key { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .82rem; margin-top: .55rem; }
+.phase-key span { display: inline-flex; gap: .4rem; align-items: center; }
+.phase-key span::before { content: ""; width: .6rem; height: .6rem; border: 1.5px solid var(--ink); }
+.phase-key .key-bcc::before { background: var(--gold); border-color: var(--gold-edge); border-radius: 50%; }
+#hull-status { display: block; color: var(--ink); font-weight: 550; font-variant-numeric: tabular-nums; }
+.readout { grid-area: readout; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; border-block: 1px solid var(--line); padding-block: 1.2rem; }
 .winner { font-size: clamp(1.9rem, 3vw, 2.5rem); font-weight: 650; line-height: 1.15; letter-spacing: -.035em; margin: .25rem 0 0; }
 .readout { font-variant-numeric: tabular-nums; }
 .energy-detail, .example-link { color: var(--muted); font-size: .92rem; }
-#controls { margin-top: 1.3rem; }
 #controls label { display: block; }
 input[type=range] { width: 100%; accent-color: var(--blue); margin: .6rem 0 1rem; }
 @font-face {
@@ -113,8 +126,9 @@ button:hover { opacity: .85; }
 summary { color: var(--blue); cursor: pointer; }
 .links { margin-top: 1.5rem; }
 @media (max-width: 740px) {
-  .split, .example, .method-row { grid-template-columns: 1fr; }
-  .readout { border: 0; padding: 0; }
+  .example { grid-template-columns: 1fr; grid-template-areas: "hull" "readout" "scan"; }
+  .readout, .method-row { grid-template-columns: 1fr; gap: 1rem; }
+  footer .bar { padding-block: 1rem; gap: .4rem 1rem; }
   .wrap { width: calc(100% - 2.5rem); }
   .bar { min-height: 62px; }
   form label { width: 100%; }

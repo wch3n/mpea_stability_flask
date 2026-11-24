@@ -26,7 +26,7 @@
       <dt>Mixing enthalpy</dt><dd>{{ '%.1f'|format(alloy.hmix*1000) }} meV/atom</dd>
       <dt>Configurational contribution (−TS)</dt><dd>{{ '%.1f'|format(alloy.ts_conf*1000) }} meV/atom</dd>
     </dl>
-    <p class="muted">Evaluated {{ res[0][2] }} entries in {{ '%.1f'|format(res[0][1]) }} s.</p>
+    <p class="muted">Evaluated {{ res[0][2] }} entries in {{ '%.1f'|format(res[0][1] * 1000) }} ms.</p>
   </details>
   <p class="links"><a href="{{ url_for('index') }}">Predict another alloy</a><a href="{{ url_for('about') }}">About the model</a></p>
 </section>

@@ -10,7 +10,8 @@
 {% set temp = 300 %}
 {% set dot_x = left + (right - left) * temp / max_t %}
 {% set dot_y = zero - (enthalpy - temp * entropy) * scale %}
-<figure class="phase-chart">
+<figure class="phase-chart scan">
+  <h3>Free energy at 50 at.% Co</h3>
   <svg id="phase-plot" viewBox="0 0 510 290" role="img" aria-labelledby="plot-title plot-desc"
        data-enthalpy="{{ enthalpy }}" data-entropy="{{ entropy }}" data-melting="{{ melting_point }}"
        data-left="{{ left }}" data-right="{{ right }}" data-zero="{{ zero }}" data-scale="{{ scale }}" data-max-t="{{ max_t }}">
@@ -37,10 +38,8 @@
       {% endfor %}
       <text class="axis-title" x="264" y="278">Temperature (K)</text>
     </g>
-    {% if interactive|default(false) %}
       <line id="separation" x1="{{ dot_x }}" x2="{{ dot_x }}" y1="{{ dot_y }}" y2="{{ zero }}"/>
       <circle id="cursor" cx="{{ dot_x }}" cy="{{ dot_y }}" r="6"/>
-    {% endif %}
   </svg>
   <figcaption>Equiatomic FeCo. The lower line gives the preferred arrangement at each temperature.</figcaption>
 </figure>
