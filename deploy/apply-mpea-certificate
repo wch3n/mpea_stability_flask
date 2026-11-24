@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+if [ "${RENEWED_LINEAGE:-}" = /etc/letsencrypt/live/mpea.alloys.dev ]; then
+    /usr/sbin/lighttpd -tt -f /etc/lighttpd/lighttpd.conf
+    # A fresh master reads the root-owned certificate before dropping privileges.
+    systemctl restart lighttpd
+fi

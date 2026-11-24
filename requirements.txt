@@ -1,0 +1,6 @@
+Flask>=3.0,<4
+gunicorn>=23
+numpy>=1.26
+pandas>=2
+pymatgen==2026.10.24
+pymatgen-core==2026.10.31
